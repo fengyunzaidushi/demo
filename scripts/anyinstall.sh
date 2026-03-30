@@ -20,3 +20,16 @@ echo "==================================="
 echo " 安装完成！"
 echo " 运行：./anytls-server --help"
 echo "==================================="
+
+# 生成随机密码
+PASSWORD=$(tr -dc 'A-Za-z0-9#@%' </dev/urandom | head -c 10)
+echo "$PASSWORD" > password.txt
+
+# 在后台启动服务
+nohup ./anytls-server -l 0.0.0.0:8443 -p "$PASSWORD" > anytls-server.log 2>&1 &
+
+echo "==================================="
+echo " 服务已启动，监听端口: 8443"
+echo " 随机生成的密码已保存至 password.txt"
+echo " 密码: $PASSWORD"
+echo "==================================="
