@@ -7,11 +7,21 @@ echo "==================================="
 apt update -y
 apt install unzip -y
 
-# 下载
-wget -N https://github.com/anytls/anytls-go/releases/download/v0.0.8/anytls_0.0.8_linux_amd64.zip
+# 下载最新版本
+RELEASE_API="https://api.github.com/repos/anytls/anytls-go/releases/latest"
+DOWNLOAD_URL=$(wget -qO- --header="Accept: application/vnd.github+json" "$RELEASE_API" | awk -F '"' '/"browser_download_url":[[:space:]]*"[^"]*_linux_amd64\.zip"/ { print $4; exit }')
+
+if [ -z "$DOWNLOAD_URL" ]; then
+    echo "未能获取 anytls 最新 Linux AMD64 版本的下载地址。"
+    exit 1
+fi
+
+ARCHIVE_NAME=${DOWNLOAD_URL##*/}
+echo "下载最新版本: $ARCHIVE_NAME"
+wget -N "$DOWNLOAD_URL"
 
 # 解压
-unzip -o anytls_0.0.8_linux_amd64.zip
+unzip -o "$ARCHIVE_NAME"
 
 # 授权
 chmod +x anytls-server
