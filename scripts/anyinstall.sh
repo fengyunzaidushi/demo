@@ -4,6 +4,22 @@ echo "==================================="
 echo " anytls 一键安装脚本 "
 echo "==================================="
 
+PORT=8443
+
+get_server_ip() {
+    local ip
+
+    ip=$(curl -4 -fsS --connect-timeout 3 --max-time 5 https://api.ipify.org 2>/dev/null) || true
+    if [ -z "$ip" ]; then
+        ip=$(curl -4 -fsS --connect-timeout 3 --max-time 5 https://ifconfig.me/ip 2>/dev/null) || true
+    fi
+    if [ -z "$ip" ]; then
+        ip=$(hostname -I 2>/dev/null | awk '{ for (i = 1; i <= NF; i++) if ($i !~ /:/ && $i !~ /^127\./) { print $i; exit } }')
+    fi
+
+    printf '%s' "$ip"
+}
+
 apt update -y
 apt install unzip -y
 
@@ -36,10 +52,30 @@ PASSWORD=$(tr -dc 'A-Za-z0-9#@%' </dev/urandom | head -c 10)
 echo "$PASSWORD" > password.txt
 
 # 在后台启动服务
-nohup ./anytls-server -l 0.0.0.0:8443 -p "$PASSWORD" > anytls-server.log 2>&1 &
+nohup ./anytls-server -l "0.0.0.0:$PORT" -p "$PASSWORD" > anytls-server.log 2>&1 &
+
+SERVER_IP=$(get_server_ip)
 
 echo "==================================="
-echo " 服务已启动，监听端口: 8443"
+echo " 服务已启动，监听端口: $PORT"
 echo " 随机生成的密码已保存至 password.txt"
 echo " 密码: $PASSWORD"
 echo "==================================="
+
+if [ -z "$SERVER_IP" ]; then
+    SERVER_IP="请填写服务器IP"
+    echo "未能自动检测服务器 IP，请手动替换配置中的 server。"
+fi
+
+echo ""
+echo "客户端配置："
+cat <<EOF
+- name: example -01
+    type: anytls
+    server: "$SERVER_IP"
+    port: $PORT
+    password: "$PASSWORD"
+    client-fingerprint: chrome
+    udp: true
+    skip-cert-verify: true
+EOF
