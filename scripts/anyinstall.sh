@@ -4,7 +4,18 @@ echo "==================================="
 echo " anytls 一键安装脚本 "
 echo "==================================="
 
-PORT=8443
+PORT=${1:-8443}
+
+if ! [[ "$PORT" =~ ^[0-9]{1,5}$ ]]; then
+    echo "端口必须是 1 到 65535 之间的整数。"
+    exit 1
+fi
+
+PORT=$((10#$PORT))
+if (( PORT < 1 || PORT > 65535 )); then
+    echo "端口必须是 1 到 65535 之间的整数。"
+    exit 1
+fi
 
 get_server_ip() {
     local ip
